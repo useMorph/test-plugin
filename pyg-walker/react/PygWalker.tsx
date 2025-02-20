@@ -1,22 +1,43 @@
 import React from "react";
-import { pluginApiRequest } from "./plugin-lib";
+import { usePluginApi } from "./plugin-lib";
 
-export const PygWalker = ({ loadData }: { loadData: string }) => {
-  const [html, setHtml] = React.useState<string | null>(null);
+export const PygWalker = ({
+  loadData,
+  width,
+  height,
+}: {
+  loadData: string;
+  width: string;
+  height: string;
+}) => {
+  const res = usePluginApi(
+    "pyg-walker",
+    loadData,
+    {
+      method: "GET",
+    },
+    async (res) => await res.text()
+  );
 
-  React.useEffect(() => {
-    const fetcher = async () => {
-      const res = await pluginApiRequest("pyg-walker", loadData);
-
-      setHtml(await res.text());
-    };
-
-    fetcher();
-  }, []);
-
-  if (!html) {
-    return <p>Loading...</p>;
+  if (res.status === "error") {
+    return <p>error...</p>;
   }
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  if (res.status === "pending") {
+    return <p>loading...</p>;
+  }
+
+  return (
+    <div style={{ width, height }}>
+      <iframe
+        srcDoc={res.data}
+        width="100%"
+        height="100%"
+        style={{
+          verticalAlign: "bottom",
+          display: "block",
+        }}
+      />
+    </div>
+  );
 };
